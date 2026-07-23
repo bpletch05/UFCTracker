@@ -12,7 +12,7 @@
     --red:#D20A0A;
     --red-dim:#7A0808;
     --gold:#C1A14F;
-    --steel:#8E96A0;
+    --steel:#0A2F8F; /* PFL royal blue, matched from their logo */
     --white:#F5F5F2;
     --dim:#9A9A9C;
     --muted:#6B6B6D;
@@ -123,7 +123,7 @@
   .fmeta{ color:var(--dim); font-size:12px; margin-top:3px;}
   .org-tag{ font-size:11px; padding:2px 7px; border-radius:2px; font-weight:700; }
   .org-tag.UFC{ background:rgba(210,10,10,0.16); color:#f0797d; }
-  .org-tag.PFL{ background:rgba(142,150,160,0.2); color:#c7ccd2; }
+  .org-tag.PFL{ background:rgba(10,47,143,0.28); color:#8fa8f0; }
   .rank-badge{ font-size:11px; padding:2px 7px; border-radius:2px; font-weight:800; background:rgba(193,161,79,0.18); color:var(--gold); margin-left:6px; white-space:nowrap; }
 
   .division-pills{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
@@ -143,7 +143,7 @@
     font-family: Inter, sans-serif;
   }
   .starbtn.Brooks.on{ background:var(--red); border-color:var(--red); color:#fff; }
-  .starbtn.Vinnie.on{ background:var(--steel); border-color:var(--steel); color:#151516; }
+  .starbtn.Vinnie.on{ background:var(--steel); border-color:var(--steel); color:#fff; }
   .starbtn.Alonzo.on{ background:var(--gold); border-color:var(--gold); color:#231c05; }
 
   .intel-btn{
@@ -180,7 +180,7 @@
   .person-header{ display:flex; align-items:center; gap:12px; margin-bottom:6px;}
   .corner-chip{ width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; font-family: Inter, sans-serif; }
   .Brooks-chip{ background:var(--red); color:#fff; }
-  .Vinnie-chip{ background:var(--steel); color:#151516; }
+  .Vinnie-chip{ background:var(--steel); color:#fff; }
   .Alonzo-chip{ background:var(--gold); color:#231c05; }
 
   .dash-fighter{ display:flex; gap:12px; }
@@ -226,7 +226,7 @@
 
 <main id="main"></main>
 
-<footer>Rosters and fighter data refresh automatically from live search on load. Fighters inactive 4+ years or announced-retired are excluded from roster pulls. Star data is shared across everyone using this app.</footer>
+<footer>Roster is a fixed snapshot — ask to have it refreshed periodically. Fighter data and events update automatically about once a week. Star data is shared across everyone using this app.</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
@@ -258,7 +258,7 @@ const ROSTER_MAX_AGE_MS = 1000*60*60*24; // 24 hours
 const UFC_DIVISIONS = ["Flyweight","Bantamweight","Featherweight","Lightweight","Welterweight","Middleweight","Light Heavyweight","Heavyweight","Women's Strawweight","Women's Flyweight","Women's Bantamweight"];
 const PFL_DIVISIONS = ["Bantamweight","Featherweight","Lightweight","Welterweight","Middleweight","Light Heavyweight","Heavyweight","Women's Flyweight","Women's Featherweight"];
 const SEED_DATE = "2026-07-22";
-const SEED_VERSION = 3; // bump whenever SEED_FIGHTERS changes meaningfully, to invalidate stale cached rosters
+const SEED_VERSION = 4; // bump whenever SEED_FIGHTERS changes meaningfully, to invalidate stale cached rosters
 
 const SEED_FIGHTERS = [
   // ===== UFC HEAVYWEIGHT, LIGHT HEAVYWEIGHT, MIDDLEWEIGHT, WELTERWEIGHT =====
@@ -504,178 +504,261 @@ const SEED_FIGHTERS = [
   {name:"Theodor Berggren", org:"UFC", division:"Welterweight"},
   {name:"Pete Rodriguez", org:"UFC", division:"Welterweight"},
   {name:"Mickey Gall", org:"UFC", division:"Welterweight"},
-  // ===== UFC LIGHTWEIGHT =====
-  {name:"Justin Gaethje", org:"UFC", division:"Lightweight"},
-  {name:"Ilia Topuria", org:"UFC", division:"Lightweight"},
-  {name:"Arman Tsarukyan", org:"UFC", division:"Lightweight"},
-  {name:"Charles Oliveira", org:"UFC", division:"Lightweight"},
-  {name:"Max Holloway", org:"UFC", division:"Lightweight"},
-  {name:"Paddy Pimblett", org:"UFC", division:"Lightweight"},
-  {name:"Benoit Saint Denis", org:"UFC", division:"Lightweight"},
-  {name:"Mauricio Ruffy", org:"UFC", division:"Lightweight"},
-  {name:"Mateusz Gamrot", org:"UFC", division:"Lightweight"},
-  {name:"Dan Hooker", org:"UFC", division:"Lightweight"},
-  {name:"Renato Moicano", org:"UFC", division:"Lightweight"},
-  {name:"Rafael Fiziev", org:"UFC", division:"Lightweight"},
-  {name:"Quillan Salkilld", org:"UFC", division:"Lightweight"},
-  {name:"Tom Nolan", org:"UFC", division:"Lightweight"},
-  {name:"Beneil Dariush", org:"UFC", division:"Lightweight"},
-  {name:"Manuel Torres", org:"UFC", division:"Lightweight"},
-  {name:"King Green", org:"UFC", division:"Lightweight"},
-  {name:"Terrance McKinney", org:"UFC", division:"Lightweight"},
-  {name:"Michael Chandler", org:"UFC", division:"Lightweight"},
-  {name:"Grant Dawson", org:"UFC", division:"Lightweight"},
-  {name:"Mateusz Rebecki", org:"UFC", division:"Lightweight"},
-  {name:"Ismael Bonfim", org:"UFC", division:"Lightweight"},
-  {name:"Chase Hooper", org:"UFC", division:"Lightweight"},
-  {name:"Edson Barboza", org:"UFC", division:"Lightweight"},
-  {name:"Jalin Turner", org:"UFC", division:"Lightweight"},
-  {name:"Bobby Green", org:"UFC", division:"Lightweight"},
-  {name:"Drew Dober", org:"UFC", division:"Lightweight"},
-
   // ===== UFC FEATHERWEIGHT =====
-  {name:"Alexander Volkanovski", org:"UFC", division:"Featherweight"},
-  {name:"Movsar Evloev", org:"UFC", division:"Featherweight"},
-  {name:"Diego Lopes", org:"UFC", division:"Featherweight"},
-  {name:"Lerone Murphy", org:"UFC", division:"Featherweight"},
-  {name:"Aljamain Sterling", org:"UFC", division:"Featherweight"},
-  {name:"Yair Rodriguez", org:"UFC", division:"Featherweight"},
-  {name:"Jean Silva", org:"UFC", division:"Featherweight"},
-  {name:"Arnold Allen", org:"UFC", division:"Featherweight"},
-  {name:"Youssef Zalal", org:"UFC", division:"Featherweight"},
-  {name:"Kevin Vallejos", org:"UFC", division:"Featherweight"},
-  {name:"Steve Garcia", org:"UFC", division:"Featherweight"},
-  {name:"Brian Ortega", org:"UFC", division:"Featherweight"},
-  {name:"Aaron Pico", org:"UFC", division:"Featherweight"},
-  {name:"Melquizael Costa", org:"UFC", division:"Featherweight"},
-  {name:"David Onama", org:"UFC", division:"Featherweight"},
-  {name:"Patricio Pitbull", org:"UFC", division:"Featherweight"},
-  {name:"Luke Riley", org:"UFC", division:"Featherweight"},
-  {name:"Kai Kamaka III", org:"UFC", division:"Featherweight"},
-  {name:"Hyder Amil", org:"UFC", division:"Featherweight"},
-  {name:"Andre Fili", org:"UFC", division:"Featherweight"},
-  {name:"Bogdan Grad", org:"UFC", division:"Featherweight"},
-  {name:"Nate Landwehr", org:"UFC", division:"Featherweight"},
-  {name:"Jose Aldo", org:"UFC", division:"Featherweight"},
-  {name:"Calvin Kattar", org:"UFC", division:"Featherweight"},
+  {name:"Pat Sabatini", org:"UFC", division:"Featherweight"},
+  {name:"Vinicius Oliveira", org:"UFC", division:"Featherweight"},
+  {name:"Nathaniel Wood", org:"UFC", division:"Featherweight"},
+  {name:"Bryce Mitchell", org:"UFC", division:"Featherweight"},
+  {name:"Dooho Choi", org:"UFC", division:"Featherweight"},
+  {name:"Losene Keita", org:"UFC", division:"Featherweight"},
+  {name:"Joanderson Brito", org:"UFC", division:"Featherweight"},
+  {name:"Mairon Santos", org:"UFC", division:"Featherweight"},
+  {name:"Patricio Freire", org:"UFC", division:"Featherweight"},
+  {name:"Ethyn Ewing", org:"UFC", division:"Featherweight"},
+  {name:"William Gomis", org:"UFC", division:"Featherweight"},
+  {name:"Lerryan Douglas", org:"UFC", division:"Featherweight"},
+  {name:"Jose Delano", org:"UFC", division:"Featherweight"},
+  {name:"Gabriel Santos", org:"UFC", division:"Featherweight"},
+  {name:"Kaan Ofli", org:"UFC", division:"Featherweight"},
+  {name:"Chepe Mariscal", org:"UFC", division:"Featherweight"},
+  {name:"Rodrigo Vera", org:"UFC", division:"Featherweight"},
+  {name:"Jose Delgado", org:"UFC", division:"Featherweight"},
+  {name:"Felipe Lima", org:"UFC", division:"Featherweight"},
+  {name:"Sean Woodson", org:"UFC", division:"Featherweight"},
+  {name:"Jamall Emmers", org:"UFC", division:"Featherweight"},
+  {name:"Chris Gutierrez", org:"UFC", division:"Featherweight"},
+  {name:"Dan Ige", org:"UFC", division:"Featherweight"},
+  {name:"Josh Emmett", org:"UFC", division:"Featherweight"},
+  {name:"Murtazali Magomedov", org:"UFC", division:"Featherweight"},
+  {name:"Daniel Santos", org:"UFC", division:"Featherweight"},
+  {name:"Marwan Rahiki", org:"UFC", division:"Featherweight"},
+  {name:"Jordan Leavitt", org:"UFC", division:"Featherweight"},
+  {name:"Marcio Barbosa", org:"UFC", division:"Featherweight"},
+  {name:"Morgan Charriere", org:"UFC", division:"Featherweight"},
+  {name:"Christian Rodriguez", org:"UFC", division:"Featherweight"},
+  {name:"Kyle Nelson", org:"UFC", division:"Featherweight"},
+  {name:"Tommy McMillen", org:"UFC", division:"Featherweight"},
+  {name:"Miles Johns", org:"UFC", division:"Featherweight"},
+  {name:"Muhammad Naimov", org:"UFC", division:"Featherweight"},
+  {name:"Darren Elkins", org:"UFC", division:"Featherweight"},
+  {name:"Giga Chikadze", org:"UFC", division:"Featherweight"},
+  {name:"Ramiro Jimenez", org:"UFC", division:"Featherweight"},
+  {name:"Jack Jenkins", org:"UFC", division:"Featherweight"},
+  {name:"Julian Erosa", org:"UFC", division:"Featherweight"},
+  {name:"Yadier del Valle", org:"UFC", division:"Featherweight"},
+  {name:"Javier Reyes", org:"UFC", division:"Featherweight"},
+  {name:"Francis Marshall", org:"UFC", division:"Featherweight"},
+  {name:"Danny Silva", org:"UFC", division:"Featherweight"},
+  {name:"JooSang Yoo", org:"UFC", division:"Featherweight"},
+  {name:"Robert Ruchala", org:"UFC", division:"Featherweight"},
+  {name:"Douglas Silva de Andrade", org:"UFC", division:"Featherweight"},
+  {name:"Sodiq Yusuff", org:"UFC", division:"Featherweight"},
+  {name:"Fernando Padilla", org:"UFC", division:"Featherweight"},
+  {name:"Austin Bashi", org:"UFC", division:"Featherweight"},
+  {name:"Billy Quarantillo", org:"UFC", division:"Featherweight"},
+  {name:"Yizha", org:"UFC", division:"Featherweight"},
+  {name:"JeongYeong Lee", org:"UFC", division:"Featherweight"},
+  {name:"Harry Hardwick", org:"UFC", division:"Featherweight"},
+  {name:"John Yannis", org:"UFC", division:"Featherweight"},
+  {name:"Zhu Kangjie", org:"UFC", division:"Featherweight"},
+  {name:"Melsik Baghdasaryan", org:"UFC", division:"Featherweight"},
+  {name:"Gaston Bolanos", org:"UFC", division:"Featherweight"},
+  {name:"Timmy Cuamba", org:"UFC", division:"Featherweight"},
+  {name:"Malcolm Wellmaker", org:"UFC", division:"Featherweight"},
+  {name:"Shayilan Nuerdanbieke", org:"UFC", division:"Featherweight"},
+  {name:"Steven Nguyen", org:"UFC", division:"Featherweight"},
+  {name:"Isaac Thomson", org:"UFC", division:"Featherweight"},
+  {name:"Kurtis Campbell", org:"UFC", division:"Featherweight"},
+  {name:"Jeremy Stephens", org:"UFC", division:"Featherweight"},
+  {name:"Alberto Montes", org:"UFC", division:"Featherweight"},
+  {name:"Dennis Buzukja", org:"UFC", division:"Featherweight"},
+  {name:"Shane Collins", org:"UFC", division:"Featherweight"},
+  {name:"Trevor Peek", org:"UFC", division:"Featherweight"},
+  {name:"Michael Aswell Jr.", org:"UFC", division:"Featherweight"},
+  {name:"Manolo Zecchini", org:"UFC", division:"Featherweight"},
+  {name:"Roberto Romero", org:"UFC", division:"Featherweight"},
+  {name:"Otari Tanzilovi", org:"UFC", division:"Featherweight"},
+  {name:"Ollie Schmid", org:"UFC", division:"Featherweight"},
+  {name:"Ricky Turcios", org:"UFC", division:"Featherweight"},
 
   // ===== UFC BANTAMWEIGHT =====
-  {name:"Petr Yan", org:"UFC", division:"Bantamweight"},
-  {name:"Merab Dvalishvili", org:"UFC", division:"Bantamweight"},
-  {name:"Sean O'Malley", org:"UFC", division:"Bantamweight"},
-  {name:"Umar Nurmagomedov", org:"UFC", division:"Bantamweight"},
-  {name:"Mario Bautista", org:"UFC", division:"Bantamweight"},
-  {name:"Cory Sandhagen", org:"UFC", division:"Bantamweight"},
-  {name:"Song Yadong", org:"UFC", division:"Bantamweight"},
-  {name:"Aiemann Zahabi", org:"UFC", division:"Bantamweight"},
-  {name:"David Martinez", org:"UFC", division:"Bantamweight"},
-  {name:"Deiveson Figueiredo", org:"UFC", division:"Bantamweight"},
-  {name:"Marlon Vera", org:"UFC", division:"Bantamweight"},
-  {name:"Payton Talbott", org:"UFC", division:"Bantamweight"},
-  {name:"Raul Rosas Jr.", org:"UFC", division:"Bantamweight"},
-  {name:"Raoni Barcelos", org:"UFC", division:"Bantamweight"},
-  {name:"Farid Basharat", org:"UFC", division:"Bantamweight"},
-  {name:"Marcus McGhee", org:"UFC", division:"Bantamweight"},
-  {name:"Cody Garbrandt", org:"UFC", division:"Bantamweight"},
-  {name:"Adrian Yanez", org:"UFC", division:"Bantamweight"},
-  {name:"John Castaneda", org:"UFC", division:"Bantamweight"},
-  {name:"Bekzat Almakhan", org:"UFC", division:"Bantamweight"},
-  {name:"Jean Matsumoto", org:"UFC", division:"Bantamweight"},
-  {name:"Kai Asakura", org:"UFC", division:"Bantamweight"},
-  {name:"Cameron Smotherman", org:"UFC", division:"Bantamweight"},
-  {name:"Cody Gibson", org:"UFC", division:"Bantamweight"},
+  {name:"Jakub Wiklacz", org:"UFC", division:"Bantamweight"},
+  {name:"Charles Jourdain", org:"UFC", division:"Bantamweight"},
+  {name:"Montel Jackson", org:"UFC", division:"Bantamweight"},
+  {name:"Davey Grant", org:"UFC", division:"Bantamweight"},
+  {name:"Elijah Smith", org:"UFC", division:"Bantamweight"},
+  {name:"Jonathan Martinez", org:"UFC", division:"Bantamweight"},
+  {name:"Juan Diaz", org:"UFC", division:"Bantamweight"},
+  {name:"Da'Mon Blackshear", org:"UFC", division:"Bantamweight"},
+  {name:"Brady Hiestand", org:"UFC", division:"Bantamweight"},
+  {name:"Ricky Simon", org:"UFC", division:"Bantamweight"},
+  {name:"Louis Lee Scott", org:"UFC", division:"Bantamweight"},
+  {name:"Victor Henry", org:"UFC", division:"Bantamweight"},
+  {name:"Rei Tsuruya", org:"UFC", division:"Bantamweight"},
+  {name:"Cody Haddon", org:"UFC", division:"Bantamweight"},
+  {name:"Muin Gafurov", org:"UFC", division:"Bantamweight"},
+  {name:"Rob Font", org:"UFC", division:"Bantamweight"},
+  {name:"Kyler Phillips", org:"UFC", division:"Bantamweight"},
+  {name:"Hecher Sosa", org:"UFC", division:"Bantamweight"},
+  {name:"Said Nurmagomedov", org:"UFC", division:"Bantamweight"},
+  {name:"Benardo Sopaj", org:"UFC", division:"Bantamweight"},
+  {name:"Rinya Nakamura", org:"UFC", division:"Bantamweight"},
+  {name:"Serhiy Sidey", org:"UFC", division:"Bantamweight"},
+  {name:"SuYoung You", org:"UFC", division:"Bantamweight"},
+  {name:"Abdul Hussein", org:"UFC", division:"Bantamweight"},
+  {name:"Santiago Luna", org:"UFC", division:"Bantamweight"},
+  {name:"Alatengheili", org:"UFC", division:"Bantamweight"},
+  {name:"Rani Yahya", org:"UFC", division:"Bantamweight"},
+  {name:"Cody Chovancek", org:"UFC", division:"Bantamweight"},
+  {name:"Cristian Quinonez", org:"UFC", division:"Bantamweight"},
+  {name:"Aleksandre Topuria", org:"UFC", division:"Bantamweight"},
+  {name:"Carlos Vera", org:"UFC", division:"Bantamweight"},
+  {name:"Colby Thicknesse", org:"UFC", division:"Bantamweight"},
+  {name:"Juan Martinetti", org:"UFC", division:"Bantamweight"},
+  {name:"Aoriqileng", org:"UFC", division:"Bantamweight"},
+  {name:"Jafel Filho", org:"UFC", division:"Bantamweight"},
+  {name:"ChangHo Lee", org:"UFC", division:"Bantamweight"},
+  {name:"Xiao Long", org:"UFC", division:"Bantamweight"},
+  {name:"Garrett Armfield", org:"UFC", division:"Bantamweight"},
+  {name:"Mark Vologdin", org:"UFC", division:"Bantamweight"},
+  {name:"Louis Jourdain", org:"UFC", division:"Bantamweight"},
+  {name:"Chad Anheliger", org:"UFC", division:"Bantamweight"},
+  {name:"Jamie Siraj", org:"UFC", division:"Bantamweight"},
+  {name:"Luis Gurule", org:"UFC", division:"Bantamweight"},
+  {name:"John Garza", org:"UFC", division:"Bantamweight"},
+  {name:"Ramon Taveras", org:"UFC", division:"Bantamweight"},
+  {name:"Cameron Saaiman", org:"UFC", division:"Bantamweight"},
+  {name:"Toshiomi Kazama", org:"UFC", division:"Bantamweight"},
+  {name:"Angel Pacheco", org:"UFC", division:"Bantamweight"},
+  {name:"Josias Musasa", org:"UFC", division:"Bantamweight"},
+  {name:"Saimon Oliveira", org:"UFC", division:"Bantamweight"},
+
+  // ===== UFC LIGHTWEIGHT =====
+  {name:"Rafa Garcia", org:"UFC", division:"Lightweight"},
+  {name:"Drakkar Klose", org:"UFC", division:"Lightweight"},
+  {name:"Ludovit Klein", org:"UFC", division:"Lightweight"},
+  {name:"Mason Jones", org:"UFC", division:"Lightweight"},
+  {name:"Alexander Hernandez", org:"UFC", division:"Lightweight"},
+  {name:"Tofiq Musayev", org:"UFC", division:"Lightweight"},
+  {name:"Fares Ziam", org:"UFC", division:"Lightweight"},
+  {name:"Chris Duncan", org:"UFC", division:"Lightweight"},
+  {name:"Nurullo Aliev", org:"UFC", division:"Lightweight"},
+  {name:"Diego Ferreira", org:"UFC", division:"Lightweight"},
+  {name:"Manoel Sousa", org:"UFC", division:"Lightweight"},
+  {name:"Chris Padilla", org:"UFC", division:"Lightweight"},
+  {name:"Kaue Fernandes", org:"UFC", division:"Lightweight"},
+  {name:"Jim Miller", org:"UFC", division:"Lightweight"},
+  {name:"Esteban Ribovics", org:"UFC", division:"Lightweight"},
+  {name:"MarQuel Mederos", org:"UFC", division:"Lightweight"},
+  {name:"Rongzhu", org:"UFC", division:"Lightweight"},
+  {name:"Jai Herbert", org:"UFC", division:"Lightweight"},
+  {name:"Mike Davis", org:"UFC", division:"Lightweight"},
+  {name:"Trey Ogden", org:"UFC", division:"Lightweight"},
+  {name:"Nasrat Haqparast", org:"UFC", division:"Lightweight"},
+  {name:"Ignacio Bahamondes", org:"UFC", division:"Lightweight"},
+  {name:"Matheus Camilo", org:"UFC", division:"Lightweight"},
+  {name:"Michael Johnson", org:"UFC", division:"Lightweight"},
+  {name:"Abdul-Kareem Al-Selwady", org:"UFC", division:"Lightweight"},
+  {name:"Joaquim Silva", org:"UFC", division:"Lightweight"},
+  {name:"Claudio Puelles", org:"UFC", division:"Lightweight"},
+  {name:"Milos Janicic", org:"UFC", division:"Lightweight"},
+  {name:"Jared Gordon", org:"UFC", division:"Lightweight"},
+  {name:"Kody Steele", org:"UFC", division:"Lightweight"},
+  {name:"Dakota Hope", org:"UFC", division:"Lightweight"},
+  {name:"Lance Gibson Jr.", org:"UFC", division:"Lightweight"},
+  {name:"Nazim Sadykhov", org:"UFC", division:"Lightweight"},
+  {name:"Damian Rzepecki", org:"UFC", division:"Lightweight"},
+  {name:"Matt Frevola", org:"UFC", division:"Lightweight"},
+  {name:"Nikolas Motta", org:"UFC", division:"Lightweight"},
+  {name:"Mandel Nallo", org:"UFC", division:"Lightweight"},
+  {name:"Gauge Young", org:"UFC", division:"Lightweight"},
+  {name:"Thomas Gantt", org:"UFC", division:"Lightweight"},
+  {name:"Daniel Zellhuber", org:"UFC", division:"Lightweight"},
+  {name:"Samuel Sanches", org:"UFC", division:"Lightweight"},
+  {name:"Charlie Campbell", org:"UFC", division:"Lightweight"},
+  {name:"Dom Mar Fan", org:"UFC", division:"Lightweight"},
+  {name:"Elves Brener", org:"UFC", division:"Lightweight"},
+  {name:"Mark Choinski", org:"UFC", division:"Lightweight"},
+  {name:"Magomed Zaynukov", org:"UFC", division:"Lightweight"},
+  {name:"Bolaji Oki", org:"UFC", division:"Lightweight"},
+  {name:"Noah Gugnon", org:"UFC", division:"Lightweight"},
+  {name:"Ottman Azaitar", org:"UFC", division:"Lightweight"},
+  {name:"Kyle Prepolec", org:"UFC", division:"Lightweight"},
+  {name:"Damir Hadzovic", org:"UFC", division:"Lightweight"},
+  {name:"Lucas Brennan", org:"UFC", division:"Lightweight"},
+  {name:"Anshul Jubli", org:"UFC", division:"Lightweight"},
+  {name:"Mitch Ramirez", org:"UFC", division:"Lightweight"},
+  {name:"Artur Minev", org:"UFC", division:"Lightweight"},
 
   // ===== UFC FLYWEIGHT =====
-  {name:"Joshua Van", org:"UFC", division:"Flyweight"},
-  {name:"Alexandre Pantoja", org:"UFC", division:"Flyweight"},
-  {name:"Manel Kape", org:"UFC", division:"Flyweight"},
-  {name:"Tatsuro Taira", org:"UFC", division:"Flyweight"},
-  {name:"Brandon Royval", org:"UFC", division:"Flyweight"},
-  {name:"Kyoji Horiguchi", org:"UFC", division:"Flyweight"},
-  {name:"Lone'er Kavanagh", org:"UFC", division:"Flyweight"},
-  {name:"Amir Albazi", org:"UFC", division:"Flyweight"},
-  {name:"Asu Almabayev", org:"UFC", division:"Flyweight"},
-  {name:"Brandon Moreno", org:"UFC", division:"Flyweight"},
-  {name:"Steve Erceg", org:"UFC", division:"Flyweight"},
-  {name:"Alex Perez", org:"UFC", division:"Flyweight"},
-  {name:"Tim Elliott", org:"UFC", division:"Flyweight"},
-  {name:"Tagir Ulanbekov", org:"UFC", division:"Flyweight"},
-  {name:"Charles Johnson", org:"UFC", division:"Flyweight"},
-  {name:"Edgar Chairez", org:"UFC", division:"Flyweight"},
-  {name:"Bruno Silva", org:"UFC", division:"Flyweight"},
-  {name:"Sumudaerji", org:"UFC", division:"Flyweight"},
-  {name:"Cody Durden", org:"UFC", division:"Flyweight"},
-  {name:"Allan Nascimento", org:"UFC", division:"Flyweight"},
-  {name:"Mitch Raposo", org:"UFC", division:"Flyweight"},
-  {name:"Jose Ochoa", org:"UFC", division:"Flyweight"},
-  {name:"Ode Osbourne", org:"UFC", division:"Flyweight"},
-  {name:"Matt Schnell", org:"UFC", division:"Flyweight"},
+  {name:"Kai Kara-France", org:"UFC", division:"Flyweight"},
+  {name:"Ramazan Temirov", org:"UFC", division:"Flyweight"},
+  {name:"Joseph Morales", org:"UFC", division:"Flyweight"},
+  {name:"Rafael Estevam", org:"UFC", division:"Flyweight"},
+  {name:"Alden Coria", org:"UFC", division:"Flyweight"},
+  {name:"Imanol Rodriguez", org:"UFC", division:"Flyweight"},
+  {name:"Alessandro Costa", org:"UFC", division:"Flyweight"},
+  {name:"Nyamjargal Tumendemberel", org:"UFC", division:"Flyweight"},
+  {name:"Lucas Rocha", org:"UFC", division:"Flyweight"},
+  {name:"Alibi Idiris", org:"UFC", division:"Flyweight"},
+  {name:"Bruno Gustavo da Silva", org:"UFC", division:"Flyweight"},
+  {name:"DongHun Choi", org:"UFC", division:"Flyweight"},
+  {name:"Kevin Borjas", org:"UFC", division:"Flyweight"},
+  {name:"HyunSung Park", org:"UFC", division:"Flyweight"},
+  {name:"Andre Lima", org:"UFC", division:"Flyweight"},
+  {name:"Ronaldo Rodriguez", org:"UFC", division:"Flyweight"},
+  {name:"Clayton Carpenter", org:"UFC", division:"Flyweight"},
+  {name:"Stewart Nicoll", org:"UFC", division:"Flyweight"},
 
   // ===== UFC WOMEN'S STRAWWEIGHT =====
-  {name:"Mackenzie Dern", org:"UFC", division:"Women's Strawweight"},
-  {name:"Zhang Weili", org:"UFC", division:"Women's Strawweight"},
-  {name:"Tatiana Suarez", org:"UFC", division:"Women's Strawweight"},
-  {name:"Virna Jandiroba", org:"UFC", division:"Women's Strawweight"},
-  {name:"Yan Xiaonan", org:"UFC", division:"Women's Strawweight"},
-  {name:"Gillian Robertson", org:"UFC", division:"Women's Strawweight"},
-  {name:"Amanda Lemos", org:"UFC", division:"Women's Strawweight"},
-  {name:"Loopy Godinez", org:"UFC", division:"Women's Strawweight"},
-  {name:"Tabatha Ricci", org:"UFC", division:"Women's Strawweight"},
-  {name:"Jessica Andrade", org:"UFC", division:"Women's Strawweight"},
-  {name:"Amanda Ribas", org:"UFC", division:"Women's Strawweight"},
-  {name:"Fatima Kline", org:"UFC", division:"Women's Strawweight"},
-  {name:"Angela Hill", org:"UFC", division:"Women's Strawweight"},
-  {name:"Denise Gomes", org:"UFC", division:"Women's Strawweight"},
-  {name:"Alexia Thainara", org:"UFC", division:"Women's Strawweight"},
-  {name:"Mizuki", org:"UFC", division:"Women's Strawweight"},
-  {name:"Xiong Jingnan", org:"UFC", division:"Women's Strawweight"},
-  {name:"Jaqueline Amorim", org:"UFC", division:"Women's Strawweight"},
-  {name:"Alice Ardelean", org:"UFC", division:"Women's Strawweight"},
-  {name:"Shauna Bannon", org:"UFC", division:"Women's Strawweight"},
+  {name:"Iasmin Lucindo", org:"UFC", division:"Women's Strawweight"},
+  {name:"Piera Rodriguez", org:"UFC", division:"Women's Strawweight"},
+  {name:"Ketlen Souza", org:"UFC", division:"Women's Strawweight"},
+  {name:"Jingnan Xiong", org:"UFC", division:"Women's Strawweight"},
+  {name:"Talita Alencar", org:"UFC", division:"Women's Strawweight"},
+  {name:"Carol Foro", org:"UFC", division:"Women's Strawweight"},
+  {name:"Sam Hughes", org:"UFC", division:"Women's Strawweight"},
+  {name:"Stephanie Luciano", org:"UFC", division:"Women's Strawweight"},
+  {name:"Yazmin Jauregui", org:"UFC", division:"Women's Strawweight"},
+  {name:"Shi Ming", org:"UFC", division:"Women's Strawweight"},
+  {name:"Loma Lookboonmee", org:"UFC", division:"Women's Strawweight"},
+  {name:"Nicolle Caliari", org:"UFC", division:"Women's Strawweight"},
+  {name:"Julia Polastri", org:"UFC", division:"Women's Strawweight"},
+  {name:"Elise Reed", org:"UFC", division:"Women's Strawweight"},
+  {name:"Shanelle Dyer", org:"UFC", division:"Women's Strawweight"},
+  {name:"Luana Pinheiro", org:"UFC", division:"Women's Strawweight"},
+  {name:"Karolina Kowalkiewicz", org:"UFC", division:"Women's Strawweight"},
+  {name:"Puja Tomar", org:"UFC", division:"Women's Strawweight"},
+  {name:"Vanessa Demopoulos", org:"UFC", division:"Women's Strawweight"},
+  {name:"Marnic Mann", org:"UFC", division:"Women's Strawweight"},
+  {name:"Polyana Viana", org:"UFC", division:"Women's Strawweight"},
+  {name:"Rayanne dos Santos", org:"UFC", division:"Women's Strawweight"},
+  {name:"Montserrat Conejo Ruiz", org:"UFC", division:"Women's Strawweight"},
+  {name:"Ravena Oliveira", org:"UFC", division:"Women's Strawweight"},
 
   // ===== UFC WOMEN'S FLYWEIGHT =====
-  {name:"Valentina Shevchenko", org:"UFC", division:"Women's Flyweight"},
-  {name:"Natalia Silva", org:"UFC", division:"Women's Flyweight"},
-  {name:"Manon Fiorot", org:"UFC", division:"Women's Flyweight"},
-  {name:"Alexa Grasso", org:"UFC", division:"Women's Flyweight"},
-  {name:"Erin Blanchfield", org:"UFC", division:"Women's Flyweight"},
-  {name:"Rose Namajunas", org:"UFC", division:"Women's Flyweight"},
-  {name:"Jasmine Jasudavicius", org:"UFC", division:"Women's Flyweight"},
-  {name:"Maycee Barber", org:"UFC", division:"Women's Flyweight"},
-  {name:"Tracy Cortez", org:"UFC", division:"Women's Flyweight"},
-  {name:"Miranda Maverick", org:"UFC", division:"Women's Flyweight"},
-  {name:"Karine Silva", org:"UFC", division:"Women's Flyweight"},
-  {name:"Casey O'Neill", org:"UFC", division:"Women's Flyweight"},
-  {name:"Wang Cong", org:"UFC", division:"Women's Flyweight"},
-  {name:"Eduarda Moura", org:"UFC", division:"Women's Flyweight"},
-  {name:"JJ Aldrich", org:"UFC", division:"Women's Flyweight"},
-  {name:"Gabriella Fernandes", org:"UFC", division:"Women's Flyweight"},
-  {name:"Jamey-Lyn Horth", org:"UFC", division:"Women's Flyweight"},
-  {name:"Dione Barbosa", org:"UFC", division:"Women's Flyweight"},
-  {name:"Juliana Miller", org:"UFC", division:"Women's Flyweight"},
-  {name:"Veronica Hardy", org:"UFC", division:"Women's Flyweight"},
+  {name:"Katlyn Cerminara", org:"UFC", division:"Women's Flyweight"},
+  {name:"Carli Judice", org:"UFC", division:"Women's Flyweight"},
+  {name:"Regina Tarin", org:"UFC", division:"Women's Flyweight"},
+  {name:"Tereza Bleda", org:"UFC", division:"Women's Flyweight"},
+  {name:"Melissa Gatto", org:"UFC", division:"Women's Flyweight"},
+  {name:"Jeisla Chaves", org:"UFC", division:"Women's Flyweight"},
+  {name:"Anna Melisano", org:"UFC", division:"Women's Flyweight"},
+  {name:"Sofia Montenegro", org:"UFC", division:"Women's Flyweight"},
+  {name:"Yuneisy Duben", org:"UFC", division:"Women's Flyweight"},
+  {name:"Ernesta Kareckaite", org:"UFC", division:"Women's Flyweight"},
 
   // ===== UFC WOMEN'S BANTAMWEIGHT =====
-  {name:"Kayla Harrison", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Julianna Pena", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Raquel Pennington", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Joselyne Edwards", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Norma Dumont", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Ailin Perez", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Irene Aldana", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Yana Santos", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Karol Rosa", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Macy Chiasson", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Jacqueline Cavalcanti", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Luana Santos", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Nora Cornolle", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Bia Mesquita", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Michelle Montague", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Miesha Tate", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Priscila Cachoeira", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Chelsea Chandler", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Ketlen Vieira", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Mayra Bueno Silva", org:"UFC", division:"Women's Bantamweight"},
+  {name:"Amanda Nunes", org:"UFC", division:"Women's Bantamweight"},
+  {name:"Melissa Croden", org:"UFC", division:"Women's Bantamweight"},
+  {name:"Klaudia Sygula", org:"UFC", division:"Women's Bantamweight"},
+  {name:"Nikolija Milosevic", org:"UFC", division:"Women's Bantamweight"},
+  {name:"Alice Pereira", org:"UFC", division:"Women's Bantamweight"},
+  {name:"Melissa Mullins", org:"UFC", division:"Women's Bantamweight"},
+  {name:"Daria Zhelezniakova", org:"UFC", division:"Women's Bantamweight"},
+  {name:"Josiane Nunes", org:"UFC", division:"Women's Bantamweight"},
+  {name:"Tainara Lisboa", org:"UFC", division:"Women's Bantamweight"},
+  {name:"Hailey Cowan", org:"UFC", division:"Women's Bantamweight"},
 
   // ===== PFL HEAVYWEIGHT =====
   {name:"Vadim Nemkov", org:"PFL", division:"Heavyweight"},
@@ -907,7 +990,7 @@ async function loadCachedRoster(){
         const others = state.fighters.filter(f=>f.org!==org);
         state.fighters = others.concat(parsed.fighters);
       }
-    }catch(e){ /* no cached roster for this org yet */ }
+    }catch(e){ console.error("Supabase read failed for roster:"+org, e); }
   }
 }
 async function loadCachedEvents(){
@@ -915,14 +998,14 @@ async function loadCachedEvents(){
     try{
       const r = await kvGet(`events:${org}`);
       if(r) state.events[org] = JSON.parse(r.value);
-    }catch(e){ /* none yet */ }
+    }catch(e){ console.error("Supabase read failed for events:"+org, e); }
   }
 }
 async function loadCachedIntel(id){
   try{
     const r = await kvGet(`intel:${id}`);
     if(r){ state.intel[id] = JSON.parse(r.value); return true; }
-  }catch(e){ /* no cache yet */ }
+  }catch(e){ console.error("Supabase read failed for intel:"+id, e); }
   return false;
 }
 
@@ -937,11 +1020,7 @@ function toggleStar(person, id){
 
 function toggleExpand(id){
   state.expanded[id] = !state.expanded[id];
-  if(state.expanded[id] && !state.intel[id]){
-    fetchIntel(id, false);
-  } else {
-    render();
-  }
+  render();
 }
 
 function yearsSince(dateStr){
@@ -988,92 +1067,12 @@ async function fetchIntel(id, force){
     parsed.ts = Date.now();
     state.intel[id] = parsed;
     state.expanded[id] = true;
-    try{ await kvSet(`intel:${id}`, JSON.stringify(parsed)); }catch(e){}
+    try{ await kvSet(`intel:${id}`, JSON.stringify(parsed)); }catch(e){ console.error("Supabase write failed for intel:"+id, e); }
   }catch(e){
     state.intel[id] = { error:true, ts:Date.now() };
     console.error("intel fetch failed for", fighter.name, e);
   }
   state.loading[id] = false;
-  render();
-}
-
-const ROSTER_WATCH_SLUG = {
-  "Flyweight":"flyweight", "Bantamweight":"bantamweight", "Featherweight":"featherweight",
-  "Lightweight":"lightweight", "Welterweight":"welterweight", "Middleweight":"middleweight",
-  "Light Heavyweight":"lightheavyweight", "Heavyweight":"heavyweight",
-  "Women's Strawweight":"womensstrawweight", "Women's Flyweight":"womensflyweight",
-  "Women's Bantamweight":"womensbantamweight",
-};
-
-async function refreshRoster(org){
-  state.rosterLoading[org] = true; state.rosterError[org] = false;
-  const divisions = org === "UFC" ? UFC_DIVISIONS : PFL_DIVISIONS;
-  state.rosterProgress[org] = { current:0, total:divisions.length, label:divisions[0] };
-  render();
-
-  const collected = [];
-  let anySuccess = false;
-
-  for(let i=0;i<divisions.length;i++){
-    const division = divisions[i];
-    state.rosterProgress[org] = { current:i+1, total:divisions.length, label:division };
-    render();
-
-    let prompt;
-    if(org === "UFC"){
-      const slugName = ROSTER_WATCH_SLUG[division];
-      const url = `https://www.roster.watch/${slugName}.html`;
-      prompt = `Go to ${url} — this is roster.watch's page listing the complete active UFC ${division} roster in a table. ` +
-        `The table on that page typically lists anywhere from 20 to 90 fighters; extract EVERY single fighter row in that table, not just the ranked top 15. Do not stop early. ` +
-        `Respond with ONLY a raw JSON array, no markdown fences, no commentary, of objects shaped exactly like: {"name":""}. ` +
-        `Keep the JSON compact (no extra whitespace) so the full list fits in the response.`;
-    } else {
-      prompt = `Search pflmma.com's roster/fighters listing for the FULL current roster of active PFL fighters in the ${division} division specifically. ` +
-        `List every currently-signed, active fighter you can find in this division — this should be the complete roster, not just the top 10-15 ranked contenders. ` +
-        `For each fighter give their most recent fight date if you can determine it. ` +
-        `Respond with ONLY a raw JSON array, no markdown fences, no commentary, of objects shaped exactly like: ` +
-        `{"name":"","lastFightDate":"YYYY-MM-DD or null if unknown","retired":true or false}. ` +
-        `Exclude anyone who has publicly announced retirement, and exclude anyone whose last fight was more than ${INACTIVE_YEARS_CUTOFF} years ago. Keep the JSON compact.`;
-    }
-
-    try{
-      const cleaned = await callClaude(prompt, 20000);
-      let list = extractJSON(cleaned, "[", "]");
-      if(org !== "UFC"){
-        list = list.filter(f=>{
-          if(f.retired) return false;
-          const yrs = yearsSince(f.lastFightDate);
-          if(yrs !== null && yrs > INACTIVE_YEARS_CUTOFF) return false;
-          return true;
-        });
-      }
-      list.forEach(f=>{
-        if(!f.name) return;
-        collected.push({ name:f.name, org, division, id:slug(f.name), lastFightDate:f.lastFightDate||null });
-      });
-      anySuccess = true;
-    }catch(e){
-      console.error("division roster fetch failed for", org, division, e);
-    }
-  }
-
-  if(!anySuccess){
-    state.rosterError[org] = true;
-  } else {
-    const seen = new Set();
-    const fighters = collected.filter(f=>{ if(seen.has(f.id)) return false; seen.add(f.id); return true; });
-
-    const starredIds = new Set();
-    PEOPLE.forEach(p=>state.stars[p].forEach(id=>starredIds.add(id)));
-    const keepOld = state.fighters.filter(f=>f.org===org && starredIds.has(f.id) && !fighters.find(nf=>nf.id===f.id));
-
-    const others = state.fighters.filter(f=>f.org!==org);
-    state.fighters = others.concat(fighters, keepOld);
-    state.rosterMeta[org] = { ts: Date.now() };
-    try{ await kvSet(`roster:${org}`, JSON.stringify({ts:Date.now(), fighters, seedVersion:SEED_VERSION})); }catch(e){}
-  }
-  state.rosterLoading[org] = false;
-  state.rosterProgress[org] = null;
   render();
 }
 
@@ -1089,7 +1088,7 @@ async function refreshEvents(org){
     const list = extractJSON(cleaned, "[", "]");
     const payload = { ts: Date.now(), list: list.slice(0,5) };
     state.events[org] = payload;
-    try{ await kvSet(`events:${org}`, JSON.stringify(payload)); }catch(e){}
+    try{ await kvSet(`events:${org}`, JSON.stringify(payload)); }catch(e){ console.error("Supabase write failed for events:"+org, e); }
   }catch(e){
     console.error("events refresh failed for", org, e);
     state.eventsError[org] = true;
@@ -1099,13 +1098,6 @@ async function refreshEvents(org){
 }
 
 
-async function autoRefreshRosterIfStale(org){
-  const meta = state.rosterMeta[org];
-  const age = meta ? Date.now() - meta.ts : Infinity;
-  if(age > ROSTER_MAX_AGE_MS){
-    await refreshRoster(org);
-  }
-}
 async function autoRefreshEventsIfStale(org){
   const meta = state.events[org];
   const age = meta ? Date.now() - meta.ts : Infinity;
@@ -1154,12 +1146,29 @@ function starRow(id){
   return wrap;
 }
 
+// Converts "YYYY-MM-DD" (or "YYYY-MM-DD..." prefixes) to "MM/DD/YYYY" for display.
+// Leaves anything that doesn't match (e.g. "TBA", empty) untouched.
+function fmtDate(dateStr){
+  if(!dateStr) return dateStr;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr);
+  if(!m) return dateStr;
+  return `${m[2]}/${m[3]}/${m[1]}`;
+}
+
 function intelBlock(fighter){
   const box = el("div","intel-box");
   const info = state.intel[fighter.id];
   if(info.error){
     box.appendChild(el("div","stale","Couldn't fetch data right now — try again."));
     return box;
+  }
+  // Confirmed upcoming fight goes first, right at the top of the box.
+  if(info.nextFight && info.nextFight.opponent){
+    const nf = el("div","next-fight");
+    nf.innerHTML = `<div class="lbl">Next fight</div>vs ${info.nextFight.opponent} — ${info.nextFight.event||"TBA"} <span class="mono">(${fmtDate(info.nextFight.date)||"date TBA"})</span>`;
+    box.appendChild(nf);
+  } else {
+    box.appendChild(el("div","stale","No fight currently scheduled."));
   }
   if(info.record){
     const rec = el("div","record mono", info.record);
@@ -1171,16 +1180,9 @@ function intelBlock(fighter){
     info.recentFights.slice(0,5).forEach(f=>{
       const row = el("div","fightline");
       const resClass = "res-"+(f.result==="NC"?"D":f.result);
-      row.innerHTML = `<span>vs ${f.opponent||"—"}</span><span class="${resClass}">${f.result||"?"}</span><span class="mono" style="color:var(--muted)">${f.method||""} · ${f.date||""}</span>`;
+      row.innerHTML = `<span>vs ${f.opponent||"—"}</span><span class="${resClass}">${f.result||"?"}</span><span class="mono" style="color:var(--muted)">${f.method||""} · ${fmtDate(f.date)||""}</span>`;
       box.appendChild(row);
     });
-  }
-  if(info.nextFight && info.nextFight.opponent){
-    const nf = el("div","next-fight");
-    nf.innerHTML = `<div class="lbl">Next fight</div>vs ${info.nextFight.opponent} — ${info.nextFight.event||"TBA"} <span class="mono">(${info.nextFight.date||"date TBA"})</span>`;
-    box.appendChild(nf);
-  } else {
-    box.appendChild(el("div","stale","No fight currently scheduled."));
   }
   if(info.news && info.news.length){
     info.news.slice(0,2).forEach(n=>{
@@ -1239,17 +1241,9 @@ function fighterCard(fighter, opts){
     } else if(state.loading[fighter.id]){
       card.appendChild(el("div","stale","Pulling last 5 results…"));
     } else {
-      card.appendChild(el("div","stale","Loading…"));
-      fetchIntel(fighter.id, false);
+      card.appendChild(el("div","stale","Not loaded yet — new picks load shortly after starring, then refresh automatically about once a week."));
     }
   }
-
-  const btn = el("button","intel-btn");
-  const loading = state.loading[fighter.id];
-  btn.disabled = !!loading;
-  btn.textContent = loading ? "Fetching…" : "Refresh fighter data";
-  btn.onclick = ()=>fetchIntel(fighter.id, true);
-  card.appendChild(btn);
 
   return card;
 }
@@ -1259,27 +1253,9 @@ function renderRosterTab(container){
   const left = el("div");
   const ufcTs = state.rosterMeta.UFC ? state.rosterMeta.UFC.ts : null;
   const pflTs = state.rosterMeta.PFL ? state.rosterMeta.PFL.ts : null;
-  function fmt(org, ts, err){
-    if(state.rosterLoading[org] && state.rosterProgress[org]){
-      const p = state.rosterProgress[org];
-      return `refreshing — ${p.label} (${p.current}/${p.total})…`;
-    }
-    if(err) return "refresh failed — try again";
-    return ts ? new Date(ts).toLocaleString() : "loading automatically…";
-  }
-  left.appendChild(el("div","stale", `UFC roster updated: ${fmt("UFC", ufcTs, state.rosterError.UFC)}`));
-  left.appendChild(el("div","stale", `PFL roster updated: ${fmt("PFL", pflTs, state.rosterError.PFL)}`));
+  left.appendChild(el("div","stale", `UFC roster: ${ufcTs ? new Date(ufcTs).toLocaleDateString() : "seeded snapshot"}`));
+  left.appendChild(el("div","stale", `PFL roster: ${pflTs ? new Date(pflTs).toLocaleDateString() : "seeded snapshot"}`));
   bar.appendChild(left);
-  const btnWrap = el("div");
-  const btnUFC = el("button","roster-btn"+(state.rosterError.UFC?" err":""), state.rosterLoading.UFC ? "Refreshing UFC…" : (state.rosterError.UFC ? "Retry UFC roster" : "Refresh UFC roster"));
-  btnUFC.disabled = state.rosterLoading.UFC;
-  btnUFC.onclick = ()=>refreshRoster("UFC");
-  const btnPFL = el("button","roster-btn"+(state.rosterError.PFL?" err":""), state.rosterLoading.PFL ? "Refreshing PFL…" : (state.rosterError.PFL ? "Retry PFL roster" : "Refresh PFL roster"));
-  btnPFL.disabled = state.rosterLoading.PFL;
-  btnPFL.style.marginLeft = "8px";
-  btnPFL.onclick = ()=>refreshRoster("PFL");
-  btnWrap.appendChild(btnUFC); btnWrap.appendChild(btnPFL);
-  bar.appendChild(btnWrap);
   container.appendChild(bar);
 
 
@@ -1376,7 +1352,7 @@ function renderDashboard(container){
       const card = el("div","card "+x.fighter.org.toLowerCase());
       card.innerHTML = `<h3 class="fname display">${x.fighter.name}</h3><div class="fmeta">${x.fighter.division} · starred by ${allStarred[x.id].join(", ")}</div>`;
       const nf = el("div","next-fight");
-      nf.innerHTML = `<div class="lbl">Next fight</div>vs ${x.intel.nextFight.opponent} — ${x.intel.nextFight.event||"TBA"} <span class="mono">(${x.intel.nextFight.date||"date TBA"})</span>`;
+      nf.innerHTML = `<div class="lbl">Next fight</div>vs ${x.intel.nextFight.opponent} — ${x.intel.nextFight.event||"TBA"} <span class="mono">(${fmtDate(x.intel.nextFight.date)||"date TBA"})</span>`;
       card.appendChild(nf);
       grid.appendChild(card);
     });
@@ -1407,15 +1383,10 @@ function renderDashboard(container){
     card.appendChild(head);
 
     if(!info){
-      card.appendChild(el("div","stale", state.loading[id] ? "Pulling data…" : "Loading…"));
-      if(!state.loading[id]) fetchIntel(id, false);
+      card.appendChild(el("div","stale", state.loading[id] ? "Pulling data…" : "Not loaded yet — will load automatically shortly."));
     } else {
       card.appendChild(intelBlock(fighter));
     }
-    const refresh = el("button","intel-btn", state.loading[id] ? "Fetching…" : "Refresh fighter data");
-    refresh.disabled = !!state.loading[id];
-    refresh.onclick = ()=>fetchIntel(id, true);
-    card.appendChild(refresh);
     grid2.appendChild(card);
   });
   container.appendChild(grid2);
@@ -1429,24 +1400,20 @@ function renderEventsTab(container){
 
     const bar = el("div","roster-refresh-bar");
     const meta = state.events[org];
-    const label = meta ? new Date(meta.ts).toLocaleString() : (state.eventsError[org] ? "refresh failed" : "loading automatically…");
+    const label = meta ? new Date(meta.ts).toLocaleString() : (state.eventsError[org] ? "last attempt failed, will retry next weekly cycle" : "loading soon…");
     bar.appendChild(el("div","stale", `Updated: ${label}`));
-    const btn = el("button","roster-btn"+(state.eventsError[org]?" err":""), state.eventsLoading[org] ? "Refreshing…" : (state.eventsError[org] ? "Retry" : "Refresh"));
-    btn.disabled = state.eventsLoading[org];
-    btn.onclick = ()=>refreshEvents(org);
-    bar.appendChild(btn);
     container.appendChild(bar);
 
     const list = meta && meta.list ? meta.list : [];
     if(!list.length){
-      container.appendChild(el("div","empty", state.eventsLoading[org] ? "Pulling upcoming events…" : "No events loaded yet."));
+      container.appendChild(el("div","empty", state.eventsLoading[org] ? "Pulling upcoming events…" : "No events loaded yet — updates automatically about once a week."));
       return;
     }
     const grid = el("div","roster-grid");
     list.forEach(ev=>{
       const card = el("div","event-card "+org.toLowerCase());
       card.appendChild(el("h3","event-name display", ev.name||"TBA"));
-      card.appendChild(el("div","event-meta", `${ev.date||"date TBA"} · ${ev.location||"location TBA"}`));
+      card.appendChild(el("div","event-meta", `${fmtDate(ev.date)||"date TBA"} · ${ev.location||"location TBA"}`));
       if(ev.mainEvent){
         card.appendChild(el("div","event-main", ev.mainEvent));
       }
@@ -1471,17 +1438,86 @@ function render(){
   }
 }
 
+const WEEKLY_REFRESH_KEY = "meta:last_weekly_refresh";
+const SAFETY_FALLBACK_MS = 1000*60*60*24*14; // if 2 full weeks pass with no Sunday run, force one anyway
+
+function isSundayLocal(){
+  return new Date().getDay() === 0;
+}
+function isSameLocalDay(ts1, ts2){
+  const d1 = new Date(ts1), d2 = new Date(ts2);
+  return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth() && d1.getDate()===d2.getDate();
+}
+
+// Free — just reads whatever's already cached in Supabase for every starred
+// fighter, so data shows up immediately without spending anything.
+async function loadAllCachedIntel(){
+  const ids = new Set();
+  PEOPLE.forEach(p=>state.stars[p].forEach(id=>ids.add(id)));
+  for(const id of ids){
+    await loadCachedIntel(id);
+  }
+  render();
+}
+
+// The only thing that triggers paid Claude API calls automatically. Runs
+// once on the FIRST Sunday anyone opens the site after last running (using
+// whoever's browser happens to load it that day — there's no server-side
+// cron here, this is purely client-triggered). Gated by a single shared
+// Supabase timestamp so it can't fire more than once per Sunday no matter
+// how many people/tabs check the site. If it's genuinely never run before,
+// it fires immediately regardless of day (so the very first deploy loads
+// real data right away instead of waiting for the next Sunday).
+//
+// IMPORTANT: if we can't read the timestamp (Supabase error), we do
+// nothing rather than assume it's due — a failed check must never turn
+// into free-for-all refetching again.
+async function maybeRunWeeklyRefresh(){
+  let lastTs = null;
+  try{
+    const r = await kvGet(WEEKLY_REFRESH_KEY);
+    if(r) lastTs = JSON.parse(r.value).ts;
+  }catch(e){
+    console.error("Could not read weekly refresh timestamp — skipping auto-refresh this load to be safe.", e);
+    return;
+  }
+
+  const now = Date.now();
+  const neverRun = !lastTs;
+  const alreadyRanToday = lastTs && isSameLocalDay(lastTs, now);
+  const wayOverdue = lastTs && (now - lastTs) > SAFETY_FALLBACK_MS;
+  const due = neverRun || wayOverdue || (isSundayLocal() && !alreadyRanToday);
+  if(!due) return;
+
+  // Mark it as done up front (not after), so if multiple people open the
+  // site around the same time, only the first one triggers the refresh.
+  try{
+    await kvSet(WEEKLY_REFRESH_KEY, JSON.stringify({ts: Date.now()}));
+  }catch(e){
+    console.error("Could not write weekly refresh timestamp — skipping to avoid duplicate runs.", e);
+    return;
+  }
+
+  const ids = new Set();
+  PEOPLE.forEach(p=>state.stars[p].forEach(id=>ids.add(id)));
+  for(const id of ids){
+    await fetchIntel(id, true);
+  }
+  await refreshEvents("UFC");
+  await refreshEvents("PFL");
+}
+
 (async function init(){
   await loadStars();
   await loadCachedRoster();
   await loadCachedEvents();
+  await loadAllCachedIntel();
   render();
-  // Roster is now seeded from a full compiled snapshot, so we don't auto-refresh
-  // it on every load — use the manual "Refresh roster" buttons on the Roster tab
-  // if you want to re-sync against ufc.com/pflmma.com later.
-  autoRefreshEventsIfStale("UFC");
-  autoRefreshEventsIfStale("PFL");
-  autoLoadStarredIntel();
+  // Roster is a fixed snapshot baked into this file — it never auto-refreshes
+  // and there is no button for it. Ask to have it regenerated periodically.
+  // Fighter data and events refresh automatically, but only about once a
+  // week, gated by maybeRunWeeklyRefresh()'s safety check.
+  maybeRunWeeklyRefresh();
 })();
 </script>
 </body>
