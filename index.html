@@ -226,7 +226,7 @@
 
 <main id="main"></main>
 
-<footer>Roster is a fixed snapshot — ask to have it refreshed periodically. Fighter data and events update automatically about once a week. Star data is shared across everyone using this app.</footer>
+<footer>Fully static site — no API calls, ever. Roster is a fixed snapshot. Fighter data and events only update when you paste in Claude's weekly update via the Update tab. Star data is shared across everyone using this app.</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
@@ -251,7 +251,7 @@ async function kvSet(key, value){
 </script>
 <script>
 const PEOPLE = ["Brooks","Vinnie","Alonzo"];
-const TABS = ["Dashboard","Brooks","Vinnie","Alonzo","Roster","Events"];
+const TABS = ["Dashboard","Brooks","Vinnie","Alonzo","Roster","Events","Update"];
 const INACTIVE_YEARS_CUTOFF = 4;
 const INTEL_MAX_AGE_MS = 1000*60*60*24*7; // 1 week — fights happen weekly/bi-weekly, no need to refresh more than that
 const ROSTER_MAX_AGE_MS = 1000*60*60*24; // 24 hours
@@ -1138,14 +1138,6 @@ let state = {
 
 function fighterById(id){ return state.fighters.find(f=>f.id===id); }
 
-// A fighter's current UFC ranking, pulled as part of their own fighter-data refresh
-// (rather than a separate rankings-wide fetch, which was unreliable). PFL has no equivalent yet.
-function getRank(fighter){
-  if(fighter.org !== "UFC") return null;
-  const info = state.intel[fighter.id];
-  return info && info.rank ? info.rank : null;
-}
-
 const DIVISION_ORDER = ["Flyweight","Bantamweight","Featherweight","Lightweight","Welterweight","Middleweight","Light Heavyweight","Heavyweight","Women's Strawweight","Women's Flyweight","Women's Bantamweight","Women's Featherweight"];
 
 // Distinct divisions present in a fighter list, sorted by actual weight-class order.
@@ -1256,10 +1248,20 @@ async function loadCachedIntel(id){
   return false;
 }
 
+// Free — just reads whatever's already cached in storage for every starred
+// fighter, so data shows up immediately without ever calling any API.
+async function loadAllCachedIntel(){
+  const ids = new Set();
+  PEOPLE.forEach(p=>state.stars[p].forEach(id=>ids.add(id)));
+  for(const id of ids){
+    await loadCachedIntel(id);
+  }
+}
+
 function toggleStar(person, id){
   const arr = state.stars[person];
   const idx = arr.indexOf(id);
-  if(idx === -1){ arr.push(id); fetchIntel(id, false); }
+  if(idx === -1){ arr.push(id); }
   else arr.splice(idx,1);
   saveStars(person);
   render();
@@ -1277,94 +1279,6 @@ function yearsSince(dateStr){
   return (Date.now() - d.getTime()) / (1000*60*60*24*365.25);
 }
 
-async function callClaude(prompt, maxTokens){
-  const resp = await fetch("/.netlify/functions/claude-proxy", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({ prompt, maxTokens })
-  });
-  const data = await resp.json();
-  const textBlocks = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n");
-  return textBlocks.replace(/```json|```/g,"").trim();
-}
-
-async function fetchIntel(id, force){
-  const fighter = fighterById(id);
-  if(!fighter) return;
-  if(!force && state.intel[id] && (Date.now() - state.intel[id].ts) < INTEL_MAX_AGE_MS){
-    render();
-    return;
-  }
-  state.loading[id] = true; render();
-  const rankInstruction = fighter.org === "UFC"
-    ? `Also check ufc.com's current rankings page and report this fighter's ranking in the ${fighter.division} division: "C" if they are champion, a number like "1" through "15" if they are a ranked contender, or null if unranked. `
-    : ``;
-  const prompt = `Search the web for up to date information on the MMA fighter "${fighter.name}" who competes in ${fighter.org} (${fighter.division}). ${rankInstruction}` +
-    `Respond with ONLY a raw JSON object, no markdown fences, no commentary, matching exactly this shape: ` +
-    `{"record":"W-L-D as a string or null","recentFights":[{"opponent":"","result":"W|L|D|NC","method":"","date":"YYYY-MM-DD or approximate"}] (up to 5, most recent first),` +
-    `"nextFight":{"opponent":"","event":"","date":""} or null if nothing scheduled,` +
-    `"retired": true or false (true if the fighter has publicly announced retirement),` +
-    `"lastFightDate":"YYYY-MM-DD of their most recent fight, or null if unknown",` +
-    `"rank":"C, a number 1-15 as a string, or null",` +
-    `"news":["short factual bullet with rough date"] (up to 2 recent items)}. If you cannot find something, use null or an empty array for that field.`;
-
-  try{
-    const cleaned = await callClaude(prompt, 1200);
-    const parsed = extractJSON(cleaned, "{", "}");
-    parsed.ts = Date.now();
-    state.intel[id] = parsed;
-    state.expanded[id] = true;
-    try{ await kvSet(`intel:${id}`, JSON.stringify(parsed)); }catch(e){ console.error("Supabase write failed for intel:"+id, e); }
-  }catch(e){
-    state.intel[id] = { error:true, ts:Date.now() };
-    console.error("intel fetch failed for", fighter.name, e);
-  }
-  state.loading[id] = false;
-  render();
-}
-
-async function refreshEvents(org){
-  state.eventsLoading[org] = true; state.eventsError[org] = false; render();
-  const source = org === "UFC" ? "ufc.com/events" : "pflmma.com/schedule or pflmma.com/events";
-  const prompt = `Search ${source} for the next 5 announced upcoming ${org} MMA events. ` +
-    `Respond with ONLY a raw JSON array, no markdown fences, no commentary, of up to 5 objects shaped exactly like: ` +
-    `{"name":"event name e.g. UFC 311 or PFL 5","date":"YYYY-MM-DD","location":"city, venue if known","mainEvent":"short description of the main event fight if announced, else empty string"}. ` +
-    `Order soonest first.`;
-  try{
-    const cleaned = await callClaude(prompt, 3000);
-    const list = extractJSON(cleaned, "[", "]");
-    const payload = { ts: Date.now(), list: list.slice(0,5) };
-    state.events[org] = payload;
-    try{ await kvSet(`events:${org}`, JSON.stringify(payload)); }catch(e){ console.error("Supabase write failed for events:"+org, e); }
-  }catch(e){
-    console.error("events refresh failed for", org, e);
-    state.eventsError[org] = true;
-  }
-  state.eventsLoading[org] = false;
-  render();
-}
-
-
-async function autoRefreshEventsIfStale(org){
-  const meta = state.events[org];
-  const age = meta ? Date.now() - meta.ts : Infinity;
-  if(age > EVENTS_MAX_AGE_MS){
-    await refreshEvents(org);
-  }
-}
-
-async function autoLoadStarredIntel(){
-  const ids = new Set();
-  PEOPLE.forEach(p=>state.stars[p].forEach(id=>ids.add(id)));
-  for(const id of ids){
-    const hadCache = await loadCachedIntel(id);
-    render();
-    const fresh = hadCache && (Date.now() - state.intel[id].ts) < INTEL_MAX_AGE_MS;
-    if(!fresh){
-      await fetchIntel(id, false);
-    }
-  }
-}
 
 // ---------- Rendering ----------
 function el(tag, cls, html){ const e = document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML = html; return e; }
@@ -1431,11 +1345,6 @@ function intelBlock(fighter){
       box.appendChild(row);
     });
   }
-  if(info.news && info.news.length){
-    info.news.slice(0,2).forEach(n=>{
-      box.appendChild(el("div","news-item", n));
-    });
-  }
   const age = Math.round((Date.now()-info.ts)/60000);
   box.appendChild(el("div","stale", `Updated ${age<1?"just now":age+" min ago"}`));
   return box;
@@ -1466,10 +1375,6 @@ function fighterCard(fighter, opts){
   const tagWrap = el("div");
   tagWrap.style.display = "flex"; tagWrap.style.gap = "6px"; tagWrap.style.alignItems = "center";
   tagWrap.appendChild(el("span","org-tag "+fighter.org, fighter.org));
-  const rank = getRank(fighter);
-  if(rank){
-    tagWrap.appendChild(el("span","rank-badge", rank==="C" ? "Champ" : "#"+rank));
-  }
   top.appendChild(tagWrap);
   card.appendChild(top);
   card.appendChild(starRow(fighter.id));
@@ -1488,7 +1393,7 @@ function fighterCard(fighter, opts){
     } else if(state.loading[fighter.id]){
       card.appendChild(el("div","stale","Pulling last 5 results…"));
     } else {
-      card.appendChild(el("div","stale","Not loaded yet — new picks load shortly after starring, then refresh automatically about once a week."));
+      card.appendChild(el("div","stale","No data yet — paste this week's update in on the Update tab to fill this in."));
     }
   }
 
@@ -1644,7 +1549,7 @@ function renderDashboard(container){
     card.appendChild(head);
 
     if(!info){
-      card.appendChild(el("div","stale", state.loading[id] ? "Pulling data…" : "Not loaded yet — will load automatically shortly."));
+      card.appendChild(el("div","stale","No data yet — paste this week's update in on the Update tab."));
     } else {
       card.appendChild(intelBlock(fighter));
     }
@@ -1661,13 +1566,13 @@ function renderEventsTab(container){
 
     const bar = el("div","roster-refresh-bar");
     const meta = state.events[org];
-    const label = meta ? new Date(meta.ts).toLocaleString() : (state.eventsError[org] ? "last attempt failed, will retry next weekly cycle" : "loading soon…");
+    const label = meta ? new Date(meta.ts).toLocaleString() : "not set yet — paste an update on the Update tab";
     bar.appendChild(el("div","stale", `Updated: ${label}`));
     container.appendChild(bar);
 
     const list = meta && meta.list ? meta.list : [];
     if(!list.length){
-      container.appendChild(el("div","empty", state.eventsLoading[org] ? "Pulling upcoming events…" : "No events loaded yet — updates automatically about once a week."));
+      container.appendChild(el("div","empty","No events loaded yet — paste an update on the Update tab."));
       return;
     }
     const grid = el("div","roster-grid");
@@ -1684,6 +1589,91 @@ function renderEventsTab(container){
   });
 }
 
+function starredFightersList(){
+  const ids = new Set();
+  PEOPLE.forEach(p=>state.stars[p].forEach(id=>ids.add(id)));
+  const fighters = Array.from(ids).map(id=>fighterById(id)).filter(Boolean);
+  fighters.sort((a,b)=>a.name.localeCompare(b.name));
+  return fighters.map(f=>`${f.name} (${f.org}, ${f.division})`).join("\n");
+}
+
+async function importUpdate(jsonText, statusEl){
+  try{
+    const data = extractJSON(jsonText, "{", "}");
+    let fighterCount = 0, eventCount = 0;
+    if(Array.isArray(data.fighters)){
+      for(const entry of data.fighters){
+        if(!entry.name) continue;
+        const id = slug(entry.name);
+        const record = { record: entry.record||null, recentFights: entry.recentFights||[], nextFight: entry.nextFight||null, ts: Date.now() };
+        state.intel[id] = record;
+        try{ await kvSet(`intel:${id}`, JSON.stringify(record)); }catch(e){ console.error("save failed for intel:"+id, e); }
+        fighterCount++;
+      }
+    }
+    if(data.events){
+      for(const org of ["UFC","PFL"]){
+        if(Array.isArray(data.events[org])){
+          const payload = { ts: Date.now(), list: data.events[org].slice(0,5) };
+          state.events[org] = payload;
+          try{ await kvSet(`events:${org}`, JSON.stringify(payload)); }catch(e){ console.error("save failed for events:"+org, e); }
+          eventCount += data.events[org].length;
+        }
+      }
+    }
+    statusEl.textContent = `Imported data for ${fighterCount} fighter(s) and ${eventCount} event(s).`;
+    render();
+  }catch(e){
+    statusEl.textContent = "Couldn't parse that — check it's valid JSON and try again.";
+    console.error("import failed", e);
+  }
+}
+
+function renderUpdateTab(container){
+  container.appendChild(el("h2","display","Weekly update"));
+  container.appendChild(el("div","stale","This site never calls any API. Once a week or so, ask Claude in a chat for an update on your starred fighters, then paste what it gives you below."));
+
+  const t1 = el("div","section-title");
+  t1.innerHTML = `<span class="display">Step 1 — copy your starred fighters</span><span class="bar"></span>`;
+  container.appendChild(t1);
+  const listBox = document.createElement("textarea");
+  listBox.readOnly = true;
+  listBox.value = starredFightersList() || "No fighters starred yet.";
+  Object.assign(listBox.style, {width:"100%", minHeight:"120px", background:"var(--card)", color:"var(--white)", border:"1px solid var(--line)", borderRadius:"4px", padding:"10px", fontFamily:"inherit", fontSize:"13px"});
+  container.appendChild(listBox);
+  const copyBtn = el("button","roster-btn","Copy list");
+  copyBtn.style.marginTop = "8px";
+  copyBtn.onclick = ()=>{
+    listBox.select();
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(listBox.value).then(()=>{
+        copyBtn.textContent = "Copied!";
+        setTimeout(()=>copyBtn.textContent="Copy list", 1500);
+      }).catch(()=>{ document.execCommand('copy'); copyBtn.textContent = "Copied!"; setTimeout(()=>copyBtn.textContent="Copy list", 1500); });
+    } else {
+      document.execCommand('copy');
+      copyBtn.textContent = "Copied!";
+      setTimeout(()=>copyBtn.textContent="Copy list", 1500);
+    }
+  };
+  container.appendChild(copyBtn);
+
+  const t2 = el("div","section-title");
+  t2.innerHTML = `<span class="display">Step 2 — paste Claude's update</span><span class="bar"></span>`;
+  container.appendChild(t2);
+  container.appendChild(el("div","stale","Paste the JSON block Claude gives you, then click Import."));
+  const pasteBox = document.createElement("textarea");
+  pasteBox.placeholder = '{"fighters":[...], "events":{"UFC":[...],"PFL":[...]}}';
+  Object.assign(pasteBox.style, {width:"100%", minHeight:"200px", background:"var(--card)", color:"var(--white)", border:"1px solid var(--line)", borderRadius:"4px", padding:"10px", fontFamily:"inherit", fontSize:"13px", marginTop:"10px"});
+  container.appendChild(pasteBox);
+  const status = el("div","stale","");
+  const importBtn = el("button","roster-btn","Import update");
+  importBtn.style.marginTop = "8px";
+  importBtn.onclick = ()=>importUpdate(pasteBox.value, status);
+  container.appendChild(importBtn);
+  container.appendChild(status);
+}
+
 function render(){
   renderTabs();
   const main = document.getElementById("main");
@@ -1696,77 +1686,11 @@ function render(){
     renderRosterTab(main);
   } else if(state.activeTab === "Events"){
     renderEventsTab(main);
+  } else if(state.activeTab === "Update"){
+    renderUpdateTab(main);
   }
 }
 
-const WEEKLY_REFRESH_KEY = "meta:last_weekly_refresh";
-const SAFETY_FALLBACK_MS = 1000*60*60*24*14; // if 2 full weeks pass with no Sunday run, force one anyway
-
-function isSundayLocal(){
-  return new Date().getDay() === 0;
-}
-function isSameLocalDay(ts1, ts2){
-  const d1 = new Date(ts1), d2 = new Date(ts2);
-  return d1.getFullYear()===d2.getFullYear() && d1.getMonth()===d2.getMonth() && d1.getDate()===d2.getDate();
-}
-
-// Free — just reads whatever's already cached in Supabase for every starred
-// fighter, so data shows up immediately without spending anything.
-async function loadAllCachedIntel(){
-  const ids = new Set();
-  PEOPLE.forEach(p=>state.stars[p].forEach(id=>ids.add(id)));
-  for(const id of ids){
-    await loadCachedIntel(id);
-  }
-  render();
-}
-
-// The only thing that triggers paid Claude API calls automatically. Runs
-// once on the FIRST Sunday anyone opens the site after last running (using
-// whoever's browser happens to load it that day — there's no server-side
-// cron here, this is purely client-triggered). Gated by a single shared
-// Supabase timestamp so it can't fire more than once per Sunday no matter
-// how many people/tabs check the site. If it's genuinely never run before,
-// it fires immediately regardless of day (so the very first deploy loads
-// real data right away instead of waiting for the next Sunday).
-//
-// IMPORTANT: if we can't read the timestamp (Supabase error), we do
-// nothing rather than assume it's due — a failed check must never turn
-// into free-for-all refetching again.
-async function maybeRunWeeklyRefresh(){
-  let lastTs = null;
-  try{
-    const r = await kvGet(WEEKLY_REFRESH_KEY);
-    if(r) lastTs = JSON.parse(r.value).ts;
-  }catch(e){
-    console.error("Could not read weekly refresh timestamp — skipping auto-refresh this load to be safe.", e);
-    return;
-  }
-
-  const now = Date.now();
-  const neverRun = !lastTs;
-  const alreadyRanToday = lastTs && isSameLocalDay(lastTs, now);
-  const wayOverdue = lastTs && (now - lastTs) > SAFETY_FALLBACK_MS;
-  const due = neverRun || wayOverdue || (isSundayLocal() && !alreadyRanToday);
-  if(!due) return;
-
-  // Mark it as done up front (not after), so if multiple people open the
-  // site around the same time, only the first one triggers the refresh.
-  try{
-    await kvSet(WEEKLY_REFRESH_KEY, JSON.stringify({ts: Date.now()}));
-  }catch(e){
-    console.error("Could not write weekly refresh timestamp — skipping to avoid duplicate runs.", e);
-    return;
-  }
-
-  const ids = new Set();
-  PEOPLE.forEach(p=>state.stars[p].forEach(id=>ids.add(id)));
-  for(const id of ids){
-    await fetchIntel(id, true);
-  }
-  await refreshEvents("UFC");
-  await refreshEvents("PFL");
-}
 
 (async function init(){
   await loadStars();
@@ -1774,11 +1698,9 @@ async function maybeRunWeeklyRefresh(){
   await loadCachedEvents();
   await loadAllCachedIntel();
   render();
-  // Roster is a fixed snapshot baked into this file — it never auto-refreshes
-  // and there is no button for it. Ask to have it regenerated periodically.
-  // Fighter data and events refresh automatically, but only about once a
-  // week, gated by maybeRunWeeklyRefresh()'s safety check.
-  maybeRunWeeklyRefresh();
+  // Fully static now — nothing on this page ever calls out to any API.
+  // Fighter data and events only ever change when someone pastes an update
+  // in via the Update tab.
 })();
 </script>
 </body>
