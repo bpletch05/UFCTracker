@@ -891,7 +891,6 @@ const SEED_FIGHTERS = [
   {name:"Julianna Pena", org:"UFC", division:"Women's Bantamweight"},
   {name:"Yana Santos", org:"UFC", division:"Women's Bantamweight"},
   {name:"Ailin Perez", org:"UFC", division:"Women's Bantamweight"},
-  {name:"Irene Aldana", org:"UFC", division:"Women's Bantamweight"},
   {name:"Michelle Montague", org:"UFC", division:"Women's Bantamweight"},
   {name:"Luana Santos", org:"UFC", division:"Women's Bantamweight"},
   {name:"Jacqueline Cavalcanti", org:"UFC", division:"Women's Bantamweight"},
@@ -998,6 +997,7 @@ const SEED_FIGHTERS = [
   {name:"Ciaran Clarke", org:"PFL", division:"Bantamweight"},
   {name:"Lazaro Dayron", org:"PFL", division:"Bantamweight"},
   {name:"Lewis McGrillen-Evans", org:"PFL", division:"Bantamweight"},
+  {name:"Bryce Meredith", org:"PFL", division:"Bantamweight"},
 
   // ===== PFL WOMEN'S FLYWEIGHT =====
   {name:"Dakota Ditcheva", org:"PFL", division:"Women's Flyweight"},
@@ -1240,22 +1240,26 @@ async function loadCachedEvents(){
     }catch(e){ console.error("Supabase read failed for events:"+org, e); }
   }
 }
-async function loadCachedIntel(id){
+const INTEL_STORE_KEY = "intel_store";
+
+// One combined read for ALL fighters' data — this is the whole reason imports
+// and page loads used to be slow. 40+ separate network calls, one per fighter,
+// all sequential, is what locks up a browser tab. This is one call, ever.
+async function loadAllCachedIntel(){
   try{
-    const r = await kvGet(`intel:${id}`);
-    if(r){ state.intel[id] = JSON.parse(r.value); return true; }
-  }catch(e){ console.error("Supabase read failed for intel:"+id, e); }
-  return false;
+    const r = await kvGet(INTEL_STORE_KEY);
+    if(r){
+      const stored = JSON.parse(r.value);
+      Object.assign(state.intel, stored);
+    }
+  }catch(e){ console.error("Supabase read failed for intel_store", e); }
 }
 
-// Free — just reads whatever's already cached in storage for every starred
-// fighter, so data shows up immediately without ever calling any API.
-async function loadAllCachedIntel(){
-  const ids = new Set();
-  PEOPLE.forEach(p=>state.stars[p].forEach(id=>ids.add(id)));
-  for(const id of ids){
-    await loadCachedIntel(id);
-  }
+// Persists the entire in-memory intel map in one write, instead of one
+// network call per fighter.
+async function saveAllIntel(){
+  try{ await kvSet(INTEL_STORE_KEY, JSON.stringify(state.intel)); }
+  catch(e){ console.error("Supabase write failed for intel_store", e); }
 }
 
 function toggleStar(person, id){
@@ -1598,6 +1602,7 @@ function starredFightersList(){
 }
 
 async function importUpdate(jsonText, statusEl){
+  statusEl.textContent = "Importing…";
   try{
     const data = extractJSON(jsonText, "{", "}");
     let fighterCount = 0, eventCount = 0;
@@ -1605,12 +1610,13 @@ async function importUpdate(jsonText, statusEl){
       for(const entry of data.fighters){
         if(!entry.name) continue;
         const id = slug(entry.name);
-        const record = { record: entry.record||null, recentFights: entry.recentFights||[], nextFight: entry.nextFight||null, ts: Date.now() };
-        state.intel[id] = record;
-        try{ await kvSet(`intel:${id}`, JSON.stringify(record)); }catch(e){ console.error("save failed for intel:"+id, e); }
+        state.intel[id] = { record: entry.record||null, recentFights: entry.recentFights||[], nextFight: entry.nextFight||null, ts: Date.now() };
         fighterCount++;
       }
     }
+    // One write for every fighter, instead of one network call per fighter.
+    await saveAllIntel();
+
     if(data.events){
       for(const org of ["UFC","PFL"]){
         if(Array.isArray(data.events[org])){
