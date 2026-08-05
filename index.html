@@ -13,6 +13,7 @@
     --red-dim:#7A0808;
     --gold:#C1A14F;
     --steel:#0A2F8F; /* PFL royal blue, matched from their logo */
+    --dwcs:#2E9E7A; /* DWCS teal-green, distinct from UFC red / PFL blue */
     --white:#F5F5F2;
     --dim:#9A9A9C;
     --muted:#6B6B6D;
@@ -115,6 +116,7 @@
   }
   .card.ufc::before{ background:var(--red); }
   .card.pfl::before{ background:var(--steel); }
+  .card.dwcs::before{ background:var(--dwcs); }
 
   .card-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
   .fname{ font-size:18px; margin:0; cursor:pointer; }
@@ -124,6 +126,7 @@
   .org-tag{ font-size:11px; padding:2px 7px; border-radius:2px; font-weight:700; }
   .org-tag.UFC{ background:rgba(210,10,10,0.16); color:#f0797d; }
   .org-tag.PFL{ background:rgba(10,47,143,0.28); color:#8fa8f0; }
+  .org-tag.DWCS{ background:rgba(46,158,122,0.22); color:#7fd6b8; }
   .rank-badge{ font-size:11px; padding:2px 7px; border-radius:2px; font-weight:800; background:rgba(193,161,79,0.18); color:var(--gold); margin-left:6px; white-space:nowrap; }
 
   .division-pills{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
@@ -174,6 +177,7 @@
   .section-title .bar{ flex:1; height:1px; background:var(--line); }
   .section-title.ufc .display{ border-bottom:2px solid var(--red); padding-bottom:3px; }
   .section-title.pfl .display{ border-bottom:2px solid var(--steel); padding-bottom:3px; }
+  .section-title.dwcs .display{ border-bottom:2px solid var(--dwcs); padding-bottom:3px; }
 
   .empty{ color:var(--muted); border:1px dashed var(--line); border-radius:4px; padding:30px; text-align:center; font-size:13px; }
 
@@ -190,6 +194,7 @@
   .event-card::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:4px; }
   .event-card.ufc::before{ background:var(--red); }
   .event-card.pfl::before{ background:var(--steel); }
+  .event-card.dwcs::before{ background:var(--dwcs); }
   .event-name{ font-size:17px; margin:0 0 4px 0; color:var(--white); }
   .event-meta{ color:var(--dim); font-size:12.5px; }
   .event-main{ margin-top:8px; font-size:13px; color:var(--gold); }
@@ -1015,6 +1020,32 @@ const SEED_FIGHTERS = [
   {name:"Cris Cyborg", org:"PFL", division:"Women's Featherweight"},
   {name:"Larissa Pacheco", org:"PFL", division:"Women's Featherweight"},
 
+  // ===== DWCS SEASON 10 (2026) — confirmed weight classes only =====
+  // Divisions confirmed for weeks 1, 2 and 6; more weeks get added as their
+  // weight classes are announced (weeks 4,5,7,8,9,10 matchups are known but
+  // divisions weren't confirmed yet as of this seeding).
+  {name:"Anthony Wint", org:"DWCS", division:"Heavyweight"},
+  {name:"Matthew Adams", org:"DWCS", division:"Heavyweight"},
+  {name:"Bilal Hasan", org:"DWCS", division:"Flyweight"},
+  {name:"Mridul Saikia", org:"DWCS", division:"Flyweight"},
+  {name:"Tom Pagliarulo", org:"DWCS", division:"Featherweight"},
+  {name:"Ananias Mulumba", org:"DWCS", division:"Featherweight"},
+  {name:"Jonathan Kunneman", org:"DWCS", division:"Middleweight"},
+  {name:"Joseph Kropschot", org:"DWCS", division:"Middleweight"},
+  {name:"Logan Paxton", org:"DWCS", division:"Lightweight"},
+  {name:"Cristian Perez", org:"DWCS", division:"Lightweight"},
+  {name:"Alik Lorenz", org:"DWCS", division:"Light Heavyweight"},
+  {name:"Mahamed Aly", org:"DWCS", division:"Light Heavyweight"},
+  {name:"Roman Puga", org:"DWCS", division:"Featherweight"},
+  {name:"Taner Trembley", org:"DWCS", division:"Featherweight"},
+  {name:"Camila Reynoso", org:"DWCS", division:"Women's Strawweight"},
+  {name:"Hailai Wushamo", org:"DWCS", division:"Women's Strawweight"},
+  {name:"Mayton Perea", org:"DWCS", division:"Welterweight"},
+  {name:"Zevan Hunt", org:"DWCS", division:"Welterweight"},
+  {name:"Tyshawn Williams", org:"DWCS", division:"Featherweight"},
+  {name:"Hugo Guillon", org:"DWCS", division:"Middleweight"},
+  {name:"Luis Hernandez", org:"DWCS", division:"Middleweight"},
+
   // ----- PFL Bantamweight additions from Wikipedia sweep -----
   {name:"Josh Rettinghouse", org:"PFL", division:"Bantamweight"},
   {name:"Robbie Ring", org:"PFL", division:"Bantamweight"},
@@ -1126,7 +1157,7 @@ let state = {
   rosterLoading: { UFC:false, PFL:false },
   rosterError: { UFC:false, PFL:false },
   rosterProgress: { UFC:null, PFL:null }, // {current, total, label}
-  events: { UFC: null, PFL: null }, // {ts, list}
+  events: { UFC: null, PFL: null, DWCS: null }, // {ts, list}
   eventsLoading: { UFC:false, PFL:false },
   eventsError: { UFC:false, PFL:false },
   divisionFilter: { Roster: [], Brooks: [], Vinnie: [], Alonzo: [] },
@@ -1233,7 +1264,7 @@ async function loadCachedRoster(){
   }
 }
 async function loadCachedEvents(){
-  for(const org of ["UFC","PFL"]){
+  for(const org of ["UFC","PFL","DWCS"]){
     try{
       const r = await kvGet(`events:${org}`);
       if(r) state.events[org] = JSON.parse(r.value);
@@ -1420,7 +1451,7 @@ function renderRosterTab(container){
   search.value = state.search;
   search.oninput = (e)=>{ state.search = e.target.value; renderList(); };
   const sel = el("select");
-  ["ALL","UFC","PFL"].forEach(o=>{
+  ["ALL","UFC","PFL","DWCS"].forEach(o=>{
     const opt = el("option", null, o==="ALL"?"All orgs":o); opt.value=o;
     if(state.orgFilter===o) opt.selected = true;
     sel.appendChild(opt);
@@ -1563,7 +1594,7 @@ function renderDashboard(container){
 }
 
 function renderEventsTab(container){
-  ["UFC","PFL"].forEach(org=>{
+  ["UFC","PFL","DWCS"].forEach(org=>{
     const t = el("div","section-title "+org.toLowerCase());
     t.innerHTML = `<span class="display">${org} — next 5 events</span><span class="bar"></span>`;
     container.appendChild(t);
@@ -1618,7 +1649,7 @@ async function importUpdate(jsonText, statusEl){
     await saveAllIntel();
 
     if(data.events){
-      for(const org of ["UFC","PFL"]){
+      for(const org of ["UFC","PFL","DWCS"]){
         if(Array.isArray(data.events[org])){
           const payload = { ts: Date.now(), list: data.events[org].slice(0,5) };
           state.events[org] = payload;
