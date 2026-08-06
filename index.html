@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Pack — Sports Hub</title>
+<style>
+  :root{
+    --black:#0B0B0C;
+    --card:#17181A;
+    --line:#26282B;
+    --white:#F2F2F0;
+    --dim:#9A9A9C;
+    --muted:#6B6B6D;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:var(--black); color:var(--white);
+    font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;
+    display:flex; flex-direction:column; align-items:center;
+    padding:60px 20px;
+  }
+  header{ text-align:center; margin-bottom:50px; }
+  h1{ font-size:34px; font-weight:800; margin:0; letter-spacing:-0.01em; }
+  header p{ color:var(--dim); font-size:14px; margin-top:8px; }
+
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:22px; max-width:900px; width:100%;
+  }
+  .tile{
+    position:relative; overflow:hidden;
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:32px 24px; text-decoration:none; color:var(--white);
+    display:flex; flex-direction:column; align-items:flex-start; gap:10px;
+    transition:transform 0.15s ease, border-color 0.15s ease;
+  }
+  .tile:hover{ transform:translateY(-3px); }
+  .tile::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:5px;
+  }
+  .tile.ufc::before{ background:linear-gradient(180deg,#D20A0A,#C1A14F); }
+  .tile.ufc:hover{ border-color:#D20A0A; }
+  .tile.cfb::before{ background:linear-gradient(180deg,#7A3B10,#D98324); }
+  .tile.cfb:hover{ border-color:#D98324; }
+  .tile.epl::before{ background:linear-gradient(180deg,#3D1A78,#5A2CA0); }
+  .tile.epl:hover{ border-color:#5A2CA0; }
+
+  .tile-icon{ font-size:30px; }
+  .tile-name{ font-size:20px; font-weight:800; }
+  .tile-desc{ font-size:13px; color:var(--dim); line-height:1.4; }
+  .tile-tag{ font-size:11px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:var(--muted); margin-top:auto; padding-top:14px; }
+
+  .tile.disabled{ opacity:0.45; pointer-events:none; cursor:default; }
+  .tile.disabled::before{ background:var(--line); }
+
+  footer{ margin-top:60px; color:var(--muted); font-size:11px; text-align:center; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>The Pack</h1>
+  <p>Pick a tracker</p>
+</header>
+
+<div class="grid">
+  <a class="tile ufc" href="./ufc/">
+    <div class="tile-icon">🥊</div>
+    <div class="tile-name">UFC / PFL Tracker</div>
+    <div class="tile-desc">Follow your favorite fighters, upcoming fights, and recent results across the UFC and PFL rosters.</div>
+    <div class="tile-tag">Open →</div>
+  </a>
+
+  <a class="tile cfb" href="./cfb/">
+    <div class="tile-icon">🏈</div>
+    <div class="tile-name">College Football Tracker</div>
+    <div class="tile-desc">Your teams, schedules, and scores for the season.</div>
+    <div class="tile-tag">Open →</div>
+  </a>
+
+  <div class="tile epl disabled">
+    <div class="tile-icon">⚽</div>
+    <div class="tile-name">Premier League Tracker</div>
+    <div class="tile-desc">Follow your Premier League club — fixtures, results, and table standing.</div>
+    <div class="tile-tag">Coming Soon</div>
+  </div>
+</div>
+
+<footer>Built for The Pack</footer>
+
+</body>
+</html>
