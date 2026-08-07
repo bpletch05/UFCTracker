@@ -40,6 +40,10 @@ h1.hero-title{font-family:'Oswald', sans-serif; font-weight:700; font-size:clamp
 .name-pill input::placeholder{color:var(--text-dim);}
 .name-pill button{font-family:'Oswald',sans-serif; font-weight:600; letter-spacing:0.04em; font-size:12px; text-transform:uppercase; background:var(--gold); color:#1a1206; border:none; border-radius:7px; padding:9px 16px; cursor:pointer;}
 .name-pill button:hover{filter:brightness(1.08);}
+.profile-picker{margin:16px auto 0; max-width:480px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;}
+.profile-btn{font-family:'Oswald',sans-serif; font-weight:600; letter-spacing:0.04em; font-size:14px; text-transform:uppercase; background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 22px; cursor:pointer; transition:all .15s;}
+.profile-btn:hover{border-color:var(--gold);}
+.profile-btn.active{background:var(--gold); color:#1a1206; border-color:var(--gold);}
 .current-player{margin-top:9px; font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--text-dim);}
 .current-player b{color:var(--gold);}
 .save-indicator{margin-top:6px; font-family:'JetBrains Mono', monospace; font-size:11px; min-height:14px;}
@@ -222,10 +226,7 @@ table.dash-table td.teamname{display:flex; align-items:center; gap:6px; font-fam
   <div class="eyebrow">Group Pool &middot; Power 4 &middot; CFP &middot; Heisman</div>
   <h1 class="hero-title">Power 4 Pick 'Em</h1>
   <div class="hero-sub">Pick your team, pick their games, watch the standings build.</div>
-  <div class="name-pill">
-    <input type="text" id="nameInput" placeholder="Enter your name to start your picks" maxlength="30">
-    <button id="setNameBtn">Set Name</button>
-  </div>
+  <div class="profile-picker" id="profilePicker"></div>
   <div class="current-player" id="currentPlayerLine"></div>
 </div>
 
@@ -335,7 +336,9 @@ const CONFERENCES = {
   "Big 12": ["Arizona","Arizona State","Baylor","BYU","Cincinnati","Colorado","Houston","Iowa State","Kansas","Kansas State","Oklahoma State","TCU","Texas Tech","UCF","Utah","West Virginia"],
   "ACC": ["Boston College","California","Clemson","Duke","Florida State","Georgia Tech","Louisville","Miami","NC State","North Carolina","Pittsburgh","SMU","Stanford","Syracuse","Virginia","Virginia Tech","Wake Forest"]
 };
-const CFP_POOL = [...Object.values(CONFERENCES).flat(), "Notre Dame"].sort();
+/* Group of 5 — CFP dropdown only (guaranteed access spot), not part of the pick'em schedules */
+const GROUP_OF_5 = ["Tulane","Memphis","Navy","South Florida","Army","UTSA","North Texas","Boise State","San Diego State","UNLV","Colorado State","Fresno State","Oregon State","Washington State","San Jose State","Appalachian State","Coastal Carolina","James Madison","Louisiana","Marshall"];
+const CFP_POOL = [...Object.values(CONFERENCES).flat(), ...GROUP_OF_5, "Notre Dame"].sort();
 const TEAM_CONF = {};
 Object.keys(CONFERENCES).forEach(c => CONFERENCES[c].forEach(t => TEAM_CONF[t]=c));
 
@@ -386,14 +389,14 @@ const NONCONF = {
 'Washington': [['Washington State',1,true,false],['Utah State',2,true,false],['Eastern Washington',3,true,false]],
 'Wisconsin': [['Notre Dame',1,null,true],['Western Illinois',2,true,false],['Eastern Michigan',3,true,false]],
 'Arizona': [['Northern Arizona',1,true,false],['Northern Illinois',3,true,false],['Washington State',4,false,false]],
-'Arizona State': [['Morgan State',1,true,false],['Texas A&M',2,false,false]],
+'Arizona State': [['Morgan State',1,true,false],['Texas A&M',2,false,false],['Hawaii',6,true,false]],
 'Baylor': [['Auburn',1,null,true],['Prairie View A&M',2,true,false],['Louisiana Tech',3,true,false]],
 'BYU': [['Utah Tech',1,true,false],['Colorado State',3,false,false],['Notre Dame',7,true,false]],
 'Cincinnati': [['Boston College',1,true,false],['Western Carolina',2,true,false],['Miami (OH)',3,true,false]],
 'Colorado': [['Georgia Tech',1,false,false],['Weber State',2,true,false],['Northwestern',3,false,false]],
 'Houston': [['Oregon State',1,true,false],['Southern',2,true,false],['Georgia Southern',4,false,false]],
 'Iowa State': [['Southeast Missouri State',1,true,false],['Iowa',2,false,false],['Bowling Green',3,true,false]],
-'Kansas': [['Long Island',1,true,false],['Missouri',2,true,false]],
+'Kansas': [['Long Island',1,true,false],['Missouri',2,true,false],['Middle Tennessee',5,true,false]],
 'Kansas State': [['Nicholls',1,true,false],['Washington State',2,true,false],['Tulane',3,true,false]],
 'Oklahoma State': [['Tulsa',1,false,false],['Oregon',2,true,false],['Murray State',3,true,false]],
 'TCU': [['North Carolina',0,null,true],['Grambling',2,true,false],['Arkansas State',3,true,false]],
@@ -959,37 +962,49 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 });
 
 /* ================= NAME HANDLING ================= */
+const PLAYERS = ["Brooks","Vinnie","Alonzo"];
+
+function renderProfilePicker(){
+  const el = document.getElementById('profilePicker');
+  el.innerHTML = PLAYERS.map(p=>`<button class="profile-btn${p===currentPlayer?' active':''}" data-player="${escapeHtml(p)}">${escapeHtml(p)}</button>`).join('');
+  el.querySelectorAll('.profile-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> switchPlayer(btn.getAttribute('data-player')));
+  });
+}
+
+async function switchPlayer(name){
+  if(currentPlayer === name) return;
+  const hadLocalEdits = Object.keys(myPicks.games).length>0 || myPicks.cfpSeeds.some(Boolean) || Object.keys(myPicks.bracket).length>0 || myPicks.heisman.some(h=>h.name||h.school);
+  const localSnapshot = hadLocalEdits && currentPlayer ? JSON.parse(JSON.stringify(myPicks)) : null;
+  currentPlayer = name;
+  renderProfilePicker();
+  updatePlayerLine();
+  await storageSet('my-name', name, false);
+  await loadMyPicksFromStorage();
+  if(localSnapshot){
+    /* Preserve any unsaved picks made under the previous profile before switching, layered onto whatever was already saved for the new profile */
+    Object.assign(myPicks.games, localSnapshot.games);
+    if(localSnapshot.cfpSeeds.some(Boolean)) myPicks.cfpSeeds = localSnapshot.cfpSeeds;
+    if(Object.keys(localSnapshot.bracket).length>0) myPicks.bracket = localSnapshot.bracket;
+    localSnapshot.heisman.forEach((h,i)=>{ if(h.name || h.school) myPicks.heisman[i] = h; });
+  }
+  renderMineTab();
+  if(localSnapshot) scheduleSave('mine');
+}
+
 async function initPlayerName(){
+  renderProfilePicker();
   const saved = await storageGet('my-name', false);
-  if(saved){
+  if(saved && PLAYERS.includes(saved)){
     currentPlayer = saved;
-    document.getElementById('nameInput').value = saved;
+    renderProfilePicker();
     updatePlayerLine();
     await loadMyPicksFromStorage();
   }
 }
 function updatePlayerLine(){
-  document.getElementById('currentPlayerLine').innerHTML = currentPlayer ? `Picks for <b>${escapeHtml(currentPlayer)}</b>` : '';
+  document.getElementById('currentPlayerLine').innerHTML = currentPlayer ? `Picks for <b>${escapeHtml(currentPlayer)}</b>` : 'Pick a name above to start';
 }
-document.getElementById('setNameBtn').addEventListener('click', async ()=>{
-  const val = document.getElementById('nameInput').value.trim();
-  if(!val) return;
-  const hadLocalEdits = Object.keys(myPicks.games).length>0 || myPicks.cfpSeeds.some(Boolean) || Object.keys(myPicks.bracket).length>0 || myPicks.heisman.some(h=>h.name||h.school);
-  const localSnapshot = hadLocalEdits ? JSON.parse(JSON.stringify(myPicks)) : null;
-  currentPlayer = val;
-  updatePlayerLine();
-  await storageSet('my-name', val, false);
-  await loadMyPicksFromStorage();
-  if(localSnapshot){
-    /* Preserve any picks made before the name was set, layered on top of whatever was already saved for this name */
-    Object.assign(myPicks.games, localSnapshot.games);
-    if(localSnapshot.cfpSeeds.some(Boolean)) myPicks.cfpSeeds = localSnapshot.cfpSeeds;
-    if(Object.keys(localSnapshot.bracket).length>0) myPicks.bracket = localSnapshot.bracket;
-    localSnapshot.heisman.forEach((h,i)=>{ if(h.name || h.school) myPicks.heisman[i] = h; });
-    renderMineTab();
-    scheduleSave('mine');
-  }
-});
 
 function normalizePicks(parsed){
   const fresh = blankPicks();
@@ -1040,13 +1055,13 @@ document.getElementById('submitActualBtn').addEventListener('click', async ()=>{
 
 /* ================= DASHBOARD ================= */
 async function fetchAllPicks(){
-  const keys = await storageList('pick:', true);
   const picks = [];
-  for(const k of keys){
-    const raw = await storageGet(k, true);
-    if(raw){ try{ picks.push(normalizePicks(JSON.parse(raw))); }catch(e){} }
+  for(const name of PLAYERS){
+    const raw = await storageGet(`pick:${slug(name)}`, true);
+    if(raw){
+      try{ const p = normalizePicks(JSON.parse(raw)); p.name = name; picks.push(p); }catch(e){}
+    }
   }
-  picks.sort((a,b)=> (a.name||'').localeCompare(b.name||''));
   return picks;
 }
 async function loadDashboard(){
