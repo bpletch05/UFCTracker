@@ -216,7 +216,8 @@ h1.hero-title{font-family:'Oswald', sans-serif; font-weight:700; font-size:clamp
 table.dash-table{border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:11px; width:100%; min-width:420px;}
 table.dash-table th, table.dash-table td{padding:5px 8px; border-bottom:1px solid var(--border); white-space:nowrap; text-align:left;}
 table.dash-table th{font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:0.04em; text-transform:uppercase; color:var(--text-dim);}
-table.dash-table td.teamname{display:flex; align-items:center; gap:6px; font-family:'Inter',sans-serif; font-size:12px;}
+table.dash-table td.teamname{font-family:'Inter',sans-serif; font-size:12px;}
+table.dash-table .teamname-inner{display:flex; align-items:center; gap:6px;}
 .dash-toggle{background:none; border:none; cursor:pointer; font-family:'Oswald',sans-serif; font-weight:600; font-size:12px; color:var(--gold); text-decoration:underline; padding:0; margin-top:10px;}
 </style>
 </head>
@@ -1079,7 +1080,7 @@ async function loadDashboard(){
       ${Array.from({length:maxLen}).map((_,i)=>`
         <tr><td>${i+1}</td>${standingsByPlayer.map(s=>{
           const r = s.rows[i];
-          return `<td class="teamname">${logoImg(r.team,'sm')}${escapeHtml(r.team)} <span style="color:var(--text-dim);">(${r.wins}-${r.losses})</span></td>`;
+          return `<td class="teamname"><span class="teamname-inner">${logoImg(r.team,'sm')}${escapeHtml(r.team)} <span style="color:var(--text-dim);">(${r.wins}-${r.losses})</span></span></td>`;
         }).join('')}</tr>`).join('')}
       </tbody></table></div>
       <button class="dash-toggle" data-conf="${conf}">Show game-by-game picks ▾</button>
@@ -1087,7 +1088,7 @@ async function loadDashboard(){
         <table class="dash-table"><thead><tr><th>Game</th>${picks.map(p=>`<th>${escapeHtml(p.name||'?')}</th>`).join('')}</tr></thead><tbody>
         ${SCHEDULES[conf].map(([h,a])=>{
           const key = gameKey(conf,h,a);
-          return `<tr><td class="teamname">${logoImg(h,'sm')}${escapeHtml(h)} vs ${escapeHtml(a)}${logoImg(a,'sm')}</td>${picks.map(p=>{
+          return `<tr><td class="teamname"><span class="teamname-inner">${logoImg(h,'sm')}${escapeHtml(h)} vs ${escapeHtml(a)}${logoImg(a,'sm')}</span></td>${picks.map(p=>{
             const w = p.games[key];
             return `<td>${w ? escapeHtml(w) : '—'}</td>`;
           }).join('')}</tr>`;
